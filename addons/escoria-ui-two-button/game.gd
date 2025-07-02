@@ -243,14 +243,14 @@ func element_focused(element_id: String) -> void:
 					$mouse_layer/verbs_menu.set_by_name("exit_right", "walk")
 				else:
 					$mouse_layer/verbs_menu.set_by_name("walk")
-			elif not $mouse_layer/verbs_menu.action_manually_changed:
+			else:
 				$mouse_layer/verbs_menu.set_by_name(target_obj.default_action)
 
 func element_unfocused() -> void:
 	$ui/tooltip.set_target("")
-	if not $mouse_layer/verbs_menu.action_manually_changed:
+	if escoria.action_manager.current_action != VERB_USE \
+		and escoria.action_manager.current_tool == null:
 		$mouse_layer/verbs_menu.set_by_name("walk")
-
 
 	# This code is commented to demonstrate how to implement a simple unhover
 	# behaviour on an item.
@@ -305,24 +305,23 @@ func left_click_on_inventory_item(inventory_item_global_id: String, event: Input
 		[inventory_item_global_id, event]
 	)
 
-	if escoria.action_manager.current_action == VERB_USE:
-		var object = escoria.object_manager.get_object(
-			inventory_item_global_id
+	var object = escoria.object_manager.get_object(
+		inventory_item_global_id
+	)
+	var item = object.node
+	if item.has_method("get_sprite") and item.get_sprite().texture:
+		$mouse_layer/verbs_menu.set_tool_texture(
+			item.get_sprite().texture
 		)
-		var item = object.node
-		if item.has_method("get_sprite") and item.get_sprite().texture:
-			$mouse_layer/verbs_menu.set_tool_texture(
-				item.get_sprite().texture
-			)
-		elif item.inventory_item.texture_normal:
-			$mouse_layer/verbs_menu.set_tool_texture(
-				item.inventory_item.texture_normal
-			)
-		escoria.action_manager.current_tool = object
+	elif item.inventory_item.texture_normal:
+		$mouse_layer/verbs_menu.set_tool_texture(
+			item.inventory_item.texture_normal
+		)
+	escoria.action_manager.current_tool = object
 
-		if escoria.action_manager.current_target != null:
-			$mouse_layer/verbs_menu.clear_tool_texture()
-			$mouse_layer/verbs_menu.set_by_name(VERB_WALK)
+	if escoria.action_manager.current_target != null:
+		$mouse_layer/verbs_menu.clear_tool_texture()
+		$mouse_layer/verbs_menu.set_by_name(VERB_WALK)
 
 func right_click_on_inventory_item(inventory_item_global_id: String, event: InputEvent) -> void:
 	element_focused(inventory_item_global_id)
@@ -353,10 +352,7 @@ func inventory_item_unfocused() -> void:
 	$ui/tooltip.clear()
 	if escoria.action_manager.current_action == VERB_WALK:
 		$mouse_layer/verbs_menu.set_by_name(VERB_WALK)
-		if $mouse_layer/verbs_menu.action_manually_changed:
-			$mouse_layer/verbs_menu.action_manually_changed = false
-	elif not $mouse_layer/verbs_menu.action_manually_changed \
-			and escoria.action_manager.current_tool == null:
+	elif escoria.action_manager.current_tool == null:
 		$mouse_layer/verbs_menu.set_by_name(VERB_WALK)
 
 
@@ -369,7 +365,11 @@ func close_inventory():
 
 
 func mousewheel_action(direction: int):
-	$mouse_layer/verbs_menu.iterate_actions_cursor(direction)
+	if $ui/inventory_ui.inventory_visible:
+		$ui/inventory_ui.hide_inventory()
+	else:
+		$ui/inventory_ui.show_inventory()
+	#$mouse_layer/verbs_menu.iterate_actions_cursor(direction)
 
 
 func hide_ui():

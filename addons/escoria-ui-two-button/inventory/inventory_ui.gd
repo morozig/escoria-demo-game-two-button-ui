@@ -82,4 +82,5 @@ func detector_out():
 
 
 func _on_detector_out_gui_input(event):
-	detector_out()
+	pass
+	#detector_out()
